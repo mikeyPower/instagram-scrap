@@ -1,11 +1,11 @@
 # Import libraries
 import requests
-import urllib.request
 import time
 from bs4 import BeautifulSoup
 import re
 import os
-import urllib
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 # Current directory
 path = os.getcwd()
@@ -32,10 +32,10 @@ soup = BeautifulSoup(response.text, "html.parser")
 
 #print(soup)
 
-#quote is in meta tag
+# Image URL is in text/javascrpt
 quote = soup.findAll('script', {"type": "text/javascript"})
 #print(quote)
-quote_of_the_day = ""
+
 #print(type(quote))
 b = re.findall(r'["](.*?)["]',str(quote))
 #print(b)
@@ -46,33 +46,29 @@ for i in b:
         if(".jpg" in i):
             url = i.replace("\\u0026","&")
             count = 1
-           # print(url)
 
-            img = urllib.urlopen(url)
+            chrome_options = Options()
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--start-maximized')
+            driver = webdriver.Chrome(chrome_options=chrome_options)
 
-            print(img.info().type)
-            image_data = img.read()
-            # Open output file in binary mode, write, and close.
-            f = open(insta_photos+count+'.jpg','wb')
-            f.write(image_data)
-            f.close()
+            time.sleep(2)
 
+            #the element with longest height on page
+            ele=driver.find_element("xpath", '//div[@class="react-grid-layout layout"]')
+            total_height = ele.size["height"]+1000
+
+            driver.set_window_size(1920, total_height)      #the trick
+            time.sleep(2)
+
+            #driver.set_window_size(1024, 768) # set the window size that you need
+            driver.get(url)
+            driver.save_screenshot(insta_photos+count+'.jpg')
+            driver.quit()
 
 
             count=count+1
+            print(url)
 
     except:
-        a = "Not everything that is faced can be changed, but nothing can be changed until it is faced.-James Baldwin"
-
-
-#check if quote of the day string is empty
-#if not quote_of_the_day:
-#    quote_of_the_day = a
-
-#remove quotes
-newstr = quote_of_the_day.replace('"', "")
-
-print(newstr)
-#split string into quote and author
-spit = newstr.rsplit('-',1)
-#print(spit)
+        print("error")
