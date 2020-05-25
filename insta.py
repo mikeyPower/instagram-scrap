@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
-def get_image_links(html_page,image_list):
+def get_image_links(html_page,image_list,path):
     # Parse HTML and save to BeautifulSoup object
     soup = BeautifulSoup(html_page, "html.parser")
 
@@ -29,7 +29,7 @@ def get_image_links(html_page,image_list):
                     image_list.append(url)
 
                     # Create jpg
-                    f = open(insta_photos+url,'wb')
+                    f = open(path+url,'wb')
 		    # Write contents of url to image
                     f.write(requests.get(url).content)
                     f.close()
@@ -76,7 +76,7 @@ last_height = browser.execute_script("return document.body.scrollHeight")
 # Need to make sure I'm still logged in in order to keep scrolling
 while True:
 
-    get_image_links(browser.page_source, images)
+    get_image_links(browser.page_source, images, insta_photos)
     # Scroll down to bottom
     browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     # Wait to load page
