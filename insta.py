@@ -5,13 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import os
 from selenium import webdriver
-#from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
-
-
-
-
 
 
 def get_image_links(html_page,image_list):
@@ -19,20 +13,26 @@ def get_image_links(html_page,image_list):
     soup = BeautifulSoup(html_page, "html.parser")
 
     # Image URL is in text/javascrpt
-    quote = soup.findAll('script', {"type": "text/javascript"})
+    image_src = soup.findAll('script', {"type": "text/javascript"})
 
-    b = re.findall(r'["](.*?)["]',str(quote))
+    b = re.findall(r'["](.*?)["]',str(image_src))
 
     for i in b:
         try:
             if(".jpg" in i):
                 url = i.replace("\\u0026","&")
                 print(url)
-                count = 1
                 if(url in image_list):
                     continue
                 else:
+                    # Add image url to list 
                     image_list.append(url)
+
+                    # Create jpg
+                    f = open(insta_photos+url,'wb')
+		    # Write contents of url to image
+                    f.write(requests.get(url).content)
+                    f.close()
             else:
                 continue
         except:
@@ -41,22 +41,10 @@ def get_image_links(html_page,image_list):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# Current directory
+# Get current directory
 path = os.getcwd()
 
-
+# Create directory for photos
 insta_photos = path+"/photos/"
 
 try:
@@ -70,11 +58,16 @@ else:
 # Set the URL you want to webscrape from
 url = 'https://www.instagram.com/lifeatdeloitteireland/?hl=en'
 
-
+# Create firefox webdriver
 browser = webdriver.Firefox()
+
+# Go to instagram url
 browser.get(url)
+
+# Create empty list to store image urls
 images = []
 
+# Set pause time in order for page to load
 SCROLL_PAUSE_TIME = 2.0
 
 # Get scroll height
