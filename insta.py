@@ -21,17 +21,19 @@ def get_image_links(html_page,image_list,path):
         try:
             if(".jpg" in i):
                 url = i.replace("\\u0026","&")
-                print(url)
+                #print(url)
                 if(url in image_list):
                     continue
                 else:
                     # Add image url to list 
                     image_list.append(url)
-
+                    print(url)
                     # Create jpg
-                    f = open(path+url,'wb')
+                    f = open(path+url+".jpg",'wb')
 		    # Write contents of url to image
-                    f.write(requests.get(url).content)
+                    response = requests.get(url, stream=True)
+                    #f.write(requests.get(url, stream=True).content)
+                    shutil.copyfileobj(response.raw, f)
                     f.close()
             else:
                 continue
@@ -61,8 +63,26 @@ url = 'https://www.instagram.com/lifeatdeloitteireland/?hl=en'
 # Create firefox webdriver
 browser = webdriver.Firefox()
 
-# Go to instagram url
+
 browser.get(url)
+
+
+
+browser.implicitly_wait(5)
+try:
+    browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
+    browser.implicitly_wait(5)
+    browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
+except:
+    browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
+
+browser.implicitly_wait(5)
+browser.find_element_by_xpath("//input[@name='email']").send_keys('email')
+browser.implicitly_wait(5)
+browser.find_element_by_xpath("//input[@name='pass']").send_keys('password') 
+browser.implicitly_wait(5)
+browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
+browser.implicitly_wait(5)
 
 # Create empty list to store image urls
 images = []
