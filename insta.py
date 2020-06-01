@@ -6,9 +6,10 @@ import re
 import os
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+import urllib.request
 
 
-def get_image_links(html_page,image_list,path):
+def get_image_links(html_page,image_list):
     # Parse HTML and save to BeautifulSoup object
     soup = BeautifulSoup(html_page, "html.parser")
 
@@ -27,14 +28,8 @@ def get_image_links(html_page,image_list,path):
                 else:
                     # Add image url to list 
                     image_list.append(url)
-                    print(url)
-                    # Create jpg
-                    f = open(path+url+".jpg",'wb')
 		    # Write contents of url to image
-                    response = requests.get(url, stream=True)
-                    #f.write(requests.get(url, stream=True).content)
-                    shutil.copyfileobj(response.raw, f)
-                    f.close()
+                    urllib.request.urlretrieve(url, "photos/"+str(len(image_list))+".jpg")
             else:
                 continue
         except:
@@ -42,70 +37,71 @@ def get_image_links(html_page,image_list,path):
     return(image_list)
 
 
-
-# Get current directory
-path = os.getcwd()
-
-# Create directory for photos
-insta_photos = path+"/photos/"
-
-try:
-    os.mkdir(insta_photos)
-except OSError:
-    print ("Creation of the directory %s failed" % insta_photos)
-else:
-    print ("Successfully created the directory %s " % insta_photos)
+def login():
+    # Get current directory
+    path = os.getcwd()
 
 
-# Set the URL you want to webscrape from
-url = 'https://www.instagram.com/lifeatdeloitteireland/?hl=en'
+    # Create directory for photos
+    insta_photos = path+"/photos/"
 
-# Create firefox webdriver
-browser = webdriver.Firefox()
+    try:
+        os.mkdir(insta_photos)
+    except OSError:
+        print ("Creation of the directory %s failed" % insta_photos)
+    else:
+        print ("Successfully created the directory %s " % insta_photos)
 
 
-browser.get(url)
+    # Set the URL you want to webscrape from
+    url = 'https://www.instagram.com/lifeatdeloitteireland/?hl=en'
+
+    # Create firefox webdriver
+    browser = webdriver.Firefox()
+
+    # Open web browser for given url
+    browser.get(url)
 
 
+    browser.implicitly_wait(5)
+    try:
+        browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
+        browser.implicitly_wait(5)
+        browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
+    except:
+        browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
 
-browser.implicitly_wait(5)
-try:
+    browser.implicitly_wait(5)
+    browser.find_element_by_xpath("//input[@name='email']").send_keys('email')
+    browser.implicitly_wait(5)
+    browser.find_element_by_xpath("//input[@name='pass']").send_keys('password') 
+    browser.implicitly_wait(5)
     browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
     browser.implicitly_wait(5)
-    browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
-except:
-    browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
 
-browser.implicitly_wait(5)
-browser.find_element_by_xpath("//input[@name='email']").send_keys('email')
-browser.implicitly_wait(5)
-browser.find_element_by_xpath("//input[@name='pass']").send_keys('password') 
-browser.implicitly_wait(5)
-browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
-browser.implicitly_wait(5)
+    # Create empty list to store image urls
+    images = []
 
-# Create empty list to store image urls
-images = []
+    # Set pause time in order for page to load
+    SCROLL_PAUSE_TIME = 2.0
 
-# Set pause time in order for page to load
-SCROLL_PAUSE_TIME = 2.0
+    # Get scroll height
+    last_height = browser.execute_script("return document.body.scrollHeight")
 
-# Get scroll height
-last_height = browser.execute_script("return document.body.scrollHeight")
+    # Need to make sure I'm still logged in in order to keep scrolling
+    while True:
 
-# Need to make sure I'm still logged in in order to keep scrolling
-while True:
+        get_image_links(browser.page_source, images)
+        # Scroll down to bottom
+        browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        # Wait to load page
+        time.sleep(SCROLL_PAUSE_TIME)
 
-    get_image_links(browser.page_source, images, insta_photos)
-    # Scroll down to bottom
-    browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    # Wait to load page
-    time.sleep(SCROLL_PAUSE_TIME)
-
-    # Calculate new scroll height and compare with last scroll height
-    new_height = browser.execute_script("return document.body.scrollHeight")
-    if new_height == last_height:
-        break
-    last_height = new_height
+        # Calculate new scroll height and compare with last scroll height
+        new_height = browser.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
 
 
+login()
