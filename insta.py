@@ -17,7 +17,6 @@ def get_image_links(html_page,image_list):
     image_src = soup.findAll('script', {"type": "text/javascript"})
 
     b = re.findall(r'["](.*?)["]',str(image_src))
-
     for i in b:
         try:
             if(".jpg" in i):
@@ -89,8 +88,9 @@ def login():
     last_height = browser.execute_script("return document.body.scrollHeight")
 
     # Need to make sure I'm still logged in in order to keep scrolling
-    while True:
+    print("Starting download of instagram images")
 
+    while True:
         get_image_links(browser.page_source, images)
         # Scroll down to bottom
         browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -103,5 +103,8 @@ def login():
             break
         last_height = new_height
 
+       # browser.refresh()
+        time.sleep(SCROLL_PAUSE_TIME)
+    print("Finished download of "+str(len(images)))
 
 login()
