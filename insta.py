@@ -1,6 +1,4 @@
 # Import libraries
-import requests
-import time
 from bs4 import BeautifulSoup
 import re
 import os
@@ -13,13 +11,14 @@ def get_image_links(html_page,image_list):
     # Parse HTML and save to BeautifulSoup object
     soup = BeautifulSoup(html_page, "html.parser")
 
-    # Image URL is in text/javascrpt
+    # Image URLs located within text/javascrpt
     image_src = soup.findAll('script', {"type": "text/javascript"})
 
     b = re.findall(r'["](.*?)["]',str(image_src))
     for i in b:
         try:
             if(".jpg" in i):
+                # Replace the below character set in order to open url
                 url = i.replace("\\u0026","&")
                 #print(url)
                 if(url in image_list):
@@ -40,7 +39,6 @@ def login():
     # Get current directory
     path = os.getcwd()
 
-
     # Create directory for photos
     insta_photos = path+"/photos/"
 
@@ -53,7 +51,7 @@ def login():
 
 
     # Set the URL you want to webscrape from
-    url = 'https://www.instagram.com/lifeatdeloitteireland/?hl=en'
+    url = 'https://www.instagram.com/'
 
     # Create firefox webdriver
     browser = webdriver.Firefox()
@@ -61,50 +59,57 @@ def login():
     # Open web browser for given url
     browser.get(url)
 
+    # Set pause time in order for page to load
+    SCROLL_PAUSE_TIME = 2.0
 
-    browser.implicitly_wait(5)
+    # Wait some time for the browser to load
+    browser.implicitly_wait(SCROLL_PAUSE_TIME)
+
+    # Since depending on which screen appears for instagram there are two variations/order that login could occur
     try:
         browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
-        browser.implicitly_wait(5)
+        browser.implicitly_wait(SCROLL_PAUSE_TIME)
         browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
     except:
         browser.find_element_by_xpath("//button[contains(.,'Log in with Facebook')]").click()
 
-    browser.implicitly_wait(5)
+
+
+    # Wait some time for the browser to load
+    browser.implicitly_wait(SCROLL_PAUSE_TIME)
+    # Search for email id and input email address
     browser.find_element_by_xpath("//input[@name='email']").send_keys('email')
-    browser.implicitly_wait(5)
-    browser.find_element_by_xpath("//input[@name='pass']").send_keys('password') 
-    browser.implicitly_wait(5)
+    # Search for pass id and input password
+    browser.find_element_by_xpath("//input[@name='pass']").send_keys('password')
+    # Search for login button and click
     browser.find_element_by_xpath("//button[contains(.,'Log In')]").click()
-    browser.implicitly_wait(5)
+    # Wait some time for page to load
+    browser.implicitly_wait(SCROLL_PAUSE_TIME)
 
     # Create empty list to store image urls
     images = []
 
-    # Set pause time in order for page to load
-    SCROLL_PAUSE_TIME = 2.0
-
     # Get scroll height
     last_height = browser.execute_script("return document.body.scrollHeight")
 
-    # Need to make sure I'm still logged in in order to keep scrolling
     print("Starting download of instagram images")
 
     while True:
         get_image_links(browser.page_source, images)
         # Scroll down to bottom
         browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        # Wait to load page
-        time.sleep(SCROLL_PAUSE_TIME)
-
+        # Wait some time for page to load
+        browser.implicitly_wait(SCROLL_PAUSE_TIME)
         # Calculate new scroll height and compare with last scroll height
         new_height = browser.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
             break
         last_height = new_height
 
-       # browser.refresh()
-        time.sleep(SCROLL_PAUSE_TIME)
+        # browser.refresh()
+        # Wait some time for page to load
+        browser.implicitly_wait(SCROLL_PAUSE_TIME)
+
     print("Finished download of "+str(len(images)))
 
 login()
